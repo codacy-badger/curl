@@ -1,5 +1,5 @@
-#ifndef HEADER_CURL_URLAPI_INT_H
-#define HEADER_CURL_URLAPI_INT_H
+#ifndef HEADER_CURL_HYPER_H
+#define HEADER_CURL_HYPER_H
 /***************************************************************************
  *                                  _   _ ____  _
  *  Project                     ___| | | |  _ \| |
@@ -11,7 +11,7 @@
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at https://curl.se/docs/copyright.html.
+ * are also available at https://curl.haxx.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -22,13 +22,25 @@
  *
  ***************************************************************************/
 #include "curl_setup.h"
-/* scheme is not URL encoded, the longest libcurl supported ones are... */
-#define MAX_SCHEME_LEN 40
 
-bool Curl_is_absolute_url(const char *url, char *scheme, size_t buflen);
+#if !defined(CURL_DISABLE_HTTP) && defined(USE_HYPER)
 
-#ifdef DEBUGBUILD
-CURLUcode Curl_parse_port(struct Curl_URL *u, char *hostname, bool);
-#endif
+#include <hyper.h>
 
-#endif /* HEADER_CURL_URLAPI_INT_H */
+/* per-transfer data for the Hyper backend */
+struct hyptransfer {
+  hyper_waker *write_waker;
+  hyper_waker *read_waker;
+  const hyper_executor *exec;
+  bool init;
+};
+
+CURLcode Curl_hyper_header(struct Curl_easy *data, hyper_headers *headers,
+                           const char *line);
+void Curl_hyper_done(struct Curl_easy *);
+
+#else
+#define Curl_hyper_done(x)
+
+#endif /* !defined(CURL_DISABLE_HTTP) && defined(USE_HYPER) */
+#endif /* HEADER_CURL_HYPER_H */
